@@ -6,6 +6,8 @@ The dataset has over 5000 entries, and tracks datapoints such as age, gender, sm
 
 Exploratory data analysis has been done on this dataset, to see the distribution of important variables, as well as show the correlation between those variables and having a stroke.   
 
+Since this is medical data, the data has been cleaned up and there aren't many identifying factors with which you could identify an individual.  As a reult, this dataset did not really need a large amount of added noise to improve privacy for the people involved in the creation of the dataset  
+
 Additionally, we ran the dataset through a KNN algorithm, in order to predict the chance of a given individual having a stroke when looking at certain risk factors. Along with this, we also analyzed the bias in both our dataset and our model. 
 
 Our project is actually a hybrid of the two options that we were given. This means that we did the knn, and did bias analysis on that.  
