@@ -1,0 +1,137 @@
+---
+title: "Code_Recreation"
+author: "Shaan Malhotra"
+date: "2023-03-14"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Code Reproduces From the Article
+
+Lets install the necessary packages:
+```{r}
+library(dplyr)
+library(caret)
+library(ggplot2)
+library(imputeTS)
+library(caTools)
+library(e1071)
+library(nnet)
+library(rpart)
+library(ggpubr)
+library("randomForest")
+library(factoextra)
+```
+
+Load in the dataset. 
+```{r}
+input_data <- read.csv("~/Desktop/healthcare-dataset-stroke-data.csv")
+```
+
+Omit the rows that contain NA
+```{r}
+input_data<- na.omit(input_data)
+```
+
+Display the dataset
+```{r}
+colnames(input_data)
+```
+
+These columns were removed in the article's code so I did the same
+```{r}
+input_features = input_data[,2:11]
+data_without_id = input_data[,2:12]
+data_without_id <- subset(data_without_id, select = -bmi)
+data_without_id <- subset(data_without_id, select = -work_type)
+data_without_id <- data_without_id[!(data_without_id$gender == "Other"), ]
+```
+
+Certain columns were converted to factors so they could be used in the model.
+```{r}
+input_features$gender <- as.factor(input_features$gender)
+input_features$ever_married <- as.factor(input_features$ever_married)
+input_features$work_type <- as.factor(input_features$work_type)
+input_features$Residence_type <- as.factor(input_features$Residence_type)
+input_features$smoking_status <- as.factor(input_features$smoking_status)
+```
+
+Store the "cleaned" data into a matrix
+```{r}
+input_features[] <- data.matrix(input_features)
+```
+
+Setting the variables for Random Downsampling 
+```{r}
+minority_class <- data_without_id[data_without_id$stroke == 1,]
+majority_class <- data_without_id[data_without_id$stroke == 0,]
+```
+
+Code for the neural network model:
+```{r}
+no_of_exps <-1000
+
+nnetwork_result = c()
+
+for (i in 1:no_of_exps) {
+  cat("Current experiment: ", i)
+  
+  
+  majority_sample <- majority_class[sample(nrow(majority_class), 548), ]
+  balanced_dataset <- rbind(minority_class, majority_sample)
+  
+  split = sample.split(balanced_dataset$stroke, SplitRatio = 0.70)
+  train_set = subset(balanced_dataset, split == TRUE)
+  test_set = subset(balanced_dataset, split == FALSE)
+  
+  nnetm <- train(as.factor(stroke) ~., data=train_set, method='nnet')
+  print(nnetm)
+  plot(nnetm)
+  pred_nn <- predict(nnetm, newdata=test_set)
+  
+  # Output labels
+  out_labels<-as.data.frame(test_set[, 9])
+  out_labels<-t(out_labels)
+  
+  cm_nn = table(out_labels, pred_nn)
+  
+  #accuracy
+  n_nn = sum(cm_nn)
+  diag_nn = diag(cm_nn)
+  accuracy_nn = sum(diag_nn) / n_nn
+  accuracy_nn
+  
+  
+  nnetwork_result[length(nnetwork_result)+1] = accuracy_nn
+}
+```
+
+Display the accuracy of teh neural network model
+```{r}
+accuracy_nn
+```
+
+Storing the predictions as a new column on the data set and re-labeling it so it can be used with the Aequitas tool:
+
+```{r}
+neural_network_data_raw <- cbind(test_set, pred_nn)
+
+neural_network_data <- neural_network_data_raw
+neural_network_data <- subset(neural_network_data, select = -c(hypertension, heart_disease, avg_glucose_level, ever_married, smoking_status))
+
+colnames(neural_network_data)[4] ="score"
+colnames(neural_network_data)[5] ="label_value"
+
+#remove the comment from the following line to save the data as a csv so it can be put into Aequitas 
+#write.csv(neural_network_data, "~/Desktop//neural_network.csv", row.names=FALSE)
+```
+
+
+
+
+Citation:
+Code was reproducded this source: 
+C. S. Nwosu*, S. Dev*, P. Bhardwaj, B. Veeravalli and D. John, Predicting Stroke from Electronic Health Records, Proc. 41st Annual International Conference of the IEEE Engineering in Medicine and Biology Society (EMBC), 2019. (* Authors contributed equally.)
