@@ -189,8 +189,51 @@ colnames(decision_tree_data)[5] ="label_value"
 #write.csv(decision_tree_data, "~/Desktop//decision_tree.csv", row.names=FALSE)
 ```
 
+Code for the random forest model: 
+```{r}
+rforest_result = c()
+
+for (i in 1:no_of_exps) {
+  cat("Current experiment: ", i)
+  
+  majority_sample <- majority_class[sample(nrow(majority_class), 548), ]
+  balanced_dataset <- rbind(minority_class, majority_sample)
+  
+  split = sample.split(balanced_dataset$stroke, SplitRatio = 0.70)
+  trainData = subset(balanced_dataset, split == TRUE)
+  testData = subset(balanced_dataset, split == FALSE)
+  
+  
+  
+  trainData$stroke <- as.character(trainData$stroke)
+  trainData$stroke <- as.factor(trainData$stroke)
+  stroke_rf = randomForest(stroke~., data=trainData, ntree=100, proximity=T)
+  strokePred = predict(stroke_rf, newdata=testData)
+  CM = table(strokePred, testData$stroke)
+  accuracy = (sum(diag(CM)))/sum(CM)
+  accuracy
+
+  rforest_result[length(rforest_result)+1] = accuracy
+}
+```
 
 
+Display the accuracy for the random forest model
+```{r}
+accuracy
+```
+
+
+Storing the predictions as a new column on the data set and re-labeling it so it can be used with the Aequitas tool:
+```{r}
+random_forest_data_raw<- cbind(testData, strokePred)
+random_forest_data <- subset(random_forest_data_raw, select = -c(hypertension, heart_disease, avg_glucose_level, ever_married, smoking_status))
+colnames(random_forest_data)[4] ="score"
+colnames(random_forest_data)[5] ="label_value"
+
+#remove the comment from the following line to save the data as a csv so it can be put into Aequitas
+#write.csv(random_forest_data, "~/Desktop//random_forest.csv", row.names=FALSE)
+```
 
 
 Citation:
