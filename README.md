@@ -1,5 +1,5 @@
 # Final-project-smsu
-Created by: Sathya Rajesh, Mohamed Albuelreich, Shaan Malhotra, Uzair Memon
+Created by: Sathya Rajesh, Mohamed Abuelreich, Shaan Malhotra, Uzair Memon
 ### Description of the Project
 
 This project is based around a dataset that looks at stroke victims, and other factors that may or may not contribute to a person having a stroke. The dataset has over 5000 entries, and tracks data points such as age, gender, smoking status, BMI, marital status, and other various factors, as well as whether or not the person has had a stroke
